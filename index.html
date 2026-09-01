@@ -447,6 +447,8 @@
             <label for="email" class="visually-hidden">Email address</label>
             <input type="email" id="email" name="email" placeholder="Your email" required autocomplete="email">
           </div>
+          <!-- PASTE YOUR WEB3FORMS ACCESS KEY BELOW -->
+          <input type="hidden" name="access_key" value="0282f166-6763-4ac8-814c-7f5ca1f68a5a">
           <button type="submit">Notify Me</button>
         </form>
         <p class="status" id="status" role="status" aria-live="polite"></p>
@@ -508,58 +510,43 @@
         return;
       }
 
-      form.addEventListener('submit', function(e){
-  e.preventDefault();
-  const email = document.getElementById('email').value.trim();
-  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      // 1. Grab the button and update UI for loading state
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Wait...';
+      status.textContent = '';
+      status.classList.remove('show');
 
-  if(!valid){
-    status.textContent = 'Enter a valid email.';
-    status.classList.remove('show');
-    return;
-  }
+      // 2. WEB3FORMS ENDPOINT — this URL is fixed and never needs to change,
+      //    but you DO need to paste your own access_key into the hidden
+      //    input above (get one free at https://web3forms.com)
+      const SCRIPT_URL = 'https://api.web3forms.com/submit';
 
-  // 1. Grab the button and update UI for loading state
-  const submitBtn = form.querySelector('button[type="submit"]');
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Wait...';
-  status.textContent = '';
-  status.classList.remove('show');
-
-  // 2. PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE
-  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwbMnpIdnQZrz5aT2ls7FLEJJg68W-VD5TrM_7ixeBruYQnY1v1_1iO56PhFjC_ev8G/exec';
-
-  // 3. Send the data to Google Sheets
-  fetch(SCRIPT_URL, {
-    method: 'POST',
-    body: new FormData(form)
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.result === 'success') {
-      status.textContent = "You're on the list.";
-      status.classList.add('show');
-      form.reset();
-    } else {
-      throw new Error('Submission failed');
-    }
-  })
-  .catch(error => {
-    status.textContent = 'Error connecting to server. Please try again.';
-    status.classList.remove('show');
-    console.error('Error!', error.message);
-  })
-  .finally(() => {
-    // 4. Reset button UI
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Notify Me';
-  });
-});
-      
-
-      status.textContent = "You're on the list.";
-      status.classList.add('show');
-      form.reset();
+      // 3. Send the data to Web3Forms
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: new FormData(form)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success === true) {
+          status.textContent = "You're on the list.";
+          status.classList.add('show');
+          form.reset();
+        } else {
+          throw new Error('Submission failed');
+        }
+      })
+      .catch(error => {
+        status.textContent = 'Error connecting to server. Please try again.';
+        status.classList.remove('show');
+        console.error('Error!', error.message);
+      })
+      .finally(() => {
+        // 4. Reset button UI
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Notify Me';
+      });
     });
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
